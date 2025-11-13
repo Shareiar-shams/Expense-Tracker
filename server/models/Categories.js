@@ -7,4 +7,4 @@ const categorySchema = new mongoose.Schema({
   icon: { type: String }, // Optional for UI
 }, { timestamps: true });
 
-module.exports = mongoose.model('Category', categorySchema);
+module.exports = mongoose.model('Categories', categorySchema);

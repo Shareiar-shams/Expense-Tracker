@@ -9,4 +9,4 @@ const transactionSchema = new mongoose.Schema({
   date: { type: Date, required: true },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+module.exports = mongoose.model('Transactions', transactionSchema);
