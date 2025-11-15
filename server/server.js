@@ -5,18 +5,25 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-console.log("Mongo URI:", process.env.MONGODB_URI);
+// Connect to MongoDB
+const mongoURI = process.env.MONGODB_URI;
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(mongoURI)
     .then(() => console.log("MongoDB Connected"))
     .catch(err => console.log("MongoDB Error:", err));
 
-app.get('/', (req, res) => res.send('API is running'));
+// Sample route
+app.get('/', (req, res) => {
+    res.send('Expense Tracker API is running');
+}); 
 
-app.listen(process.env.PORT, () =>
-    console.log(`Server running on port ${process.env.PORT}`)
-);
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
