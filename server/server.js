@@ -6,7 +6,7 @@ const cors = require('cors');
 const authMiddleware = require("./middleware/auth");
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
-// const transactionRoutes = require('./routes/transactionRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -37,7 +37,7 @@ app.use(authMiddleware);
 app.use('/api/categories', categoryRoutes);
 
 // Transaction routes
-// app.use('/api/transactions', transactionRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Start the server
 app.listen(PORT, () => {
