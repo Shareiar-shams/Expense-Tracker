@@ -27,7 +27,6 @@ const createCategory = async (req, res) => {
             return res.status(400).json({ message: "Name and type are required" });
         }
         type = type.toLowerCase();
-        console.log("Creating category with type:", type);
         // type validation
         if (!["income", "expense"].includes(type)) {
             return res.status(400).json({ message: "Type must be income or expense" });
