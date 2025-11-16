@@ -1,33 +1,77 @@
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
-// import Dashboard from './pages/Dashboard';
-// import CategoryPage from './pages/CategoryPage';
-// import TransactionPage from './pages/TransactionPage';
-import Navbar from './components/Navbar';
+import RegisterPage from './pages/RegisterPage';
+import LandingPage from './pages/LandingPage';
+import Dashboard from './pages/Dashboard';
+import CategoryPage from './pages/CategoryPage';
+import TransactionPage from './pages/TransactionPage';
+import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 
-
-function AppLayout() {
-  const location = useLocation();
-  const hideNavbar = location.pathname === '/';
-
+function App() {
   return (
-    <>
-      {!hideNavbar && <Navbar />}
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        {/* <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/categories" element={<CategoryPage />} />
-        <Route path="/transactions" element={<TransactionPage />} /> */}
-      </Routes>
-    </>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          
+          {/* Auth Routes - Redirect if already logged in */}
+          <Route 
+            path="/login" 
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            } 
+          />
+          
+          <Route 
+            path="/register" 
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            } 
+          />
+
+          {/* Protected Routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/categories" 
+            element={
+              <ProtectedRoute>
+                <CategoryPage />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/transactions" 
+            element={
+              <ProtectedRoute>
+                <TransactionPage />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Catch-all route (404) */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
-export default function App() {
-  return (
-    <Router>
-      <AppLayout />
-    </Router>
-  );
-}
+export default App;
