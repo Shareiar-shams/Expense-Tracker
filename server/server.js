@@ -3,6 +3,10 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const authMiddleware = require("./middleware/auth");
+const authRoutes = require('./routes/authRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+// const transactionRoutes = require('./routes/transactionRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +26,18 @@ mongoose.connect(mongoURI)
 app.get('/', (req, res) => {
     res.send('Expense Tracker API is running');
 }); 
+
+// Auth routes
+app.use('/api/auth', authRoutes);
+
+// 🔴 Apply Auth Middleware Globally (Protections Start)
+app.use(authMiddleware);
+
+// Category routes
+app.use('/api/categories', categoryRoutes);
+
+// Transaction routes
+// app.use('/api/transactions', transactionRoutes);
 
 // Start the server
 app.listen(PORT, () => {
