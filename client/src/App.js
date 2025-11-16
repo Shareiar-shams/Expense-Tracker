@@ -1,25 +1,33 @@
-import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+// import Dashboard from './pages/Dashboard';
+// import CategoryPage from './pages/CategoryPage';
+// import TransactionPage from './pages/TransactionPage';
+import Navbar from './components/Navbar';
 
-function App() {
+
+function AppLayout() {
+  const location = useLocation();
+  const hideNavbar = location.pathname === '/';
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      {!hideNavbar && <Navbar />}
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        {/* <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/categories" element={<CategoryPage />} />
+        <Route path="/transactions" element={<TransactionPage />} /> */}
+      </Routes>
+    </>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Router>
+      <AppLayout />
+    </Router>
+  );
+}
