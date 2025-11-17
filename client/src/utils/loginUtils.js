@@ -27,13 +27,13 @@ export const handleLoginSubmit = async (e, email, password, { login, navigate })
     try {
         const { default: axios } = await import('../services/api');
         const res = await axios.post('/auth/login', { email, password });
-        login(res.data.token);
+        login(res.data.token, res.data.user);
         navigate('/dashboard');
         return { success: true };
     } catch (err) {
-        return { 
-        success: false, 
-        apiError: err.response?.data?.message || 'Login failed. Please check your credentials.' 
+        return {
+        success: false,
+        apiError: err.response?.data?.message || 'Login failed. Please check your credentials.'
         };
     }
 };
