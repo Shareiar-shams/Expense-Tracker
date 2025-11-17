@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import CategoryPage from './pages/CategoryPage';
@@ -29,14 +30,16 @@ function App() {
             } 
           />
           
-          <Route 
-            path="/register" 
+          <Route
+            path="/register"
             element={
               <PublicRoute>
                 <RegisterPage />
               </PublicRoute>
-            } 
+            }
           />
+          
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
           {/* Protected Routes */}
           <Route 
