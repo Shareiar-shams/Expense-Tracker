@@ -56,7 +56,7 @@ export default function RegisterPage() {
       footerLink={{
         text: 'Already have an account?',
         linkText: 'Sign In',
-        onClick: () => navigate('/')
+        onClick: () => navigate('/login')
       }}
     >
       <FormInput
@@ -87,6 +87,7 @@ export default function RegisterPage() {
           value={form.password}
           onChange={(e) => handleChange('password', e.target.value)}
           error={validationErrors.password}
+          showPasswordToggle={true}
           required
         />
         
@@ -105,6 +106,7 @@ export default function RegisterPage() {
         value={form.confirmPassword}
         onChange={(e) => handleChange('confirmPassword', e.target.value)}
         error={validationErrors.confirmPassword}
+        showPasswordToggle={true}
         required
       />
     </FormWrapper>
