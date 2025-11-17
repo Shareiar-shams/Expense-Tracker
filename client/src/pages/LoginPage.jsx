@@ -3,16 +3,30 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import FormWrapper from '../components/FormWrapper';
 import FormInput from '../components/FormInput';
+import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import { handleLoginSubmit } from '../utils/loginUtils';
 
 export default function LoginPage() {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const navigate = useNavigate();
+
+  // Load saved credentials on component mount
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    const savedPassword = localStorage.getItem('rememberedPassword');
+    if (savedEmail && savedPassword) {
+      setEmail(savedEmail);
+      setPassword(savedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,6 +35,17 @@ export default function LoginPage() {
     setValidationErrors({});
 
     const result = await handleLoginSubmit(e, email, password, { login, navigate });
+
+    if (result.success) {
+      // Save or clear credentials based on remember me checkbox
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+        localStorage.setItem('rememberedPassword', password);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+        localStorage.removeItem('rememberedPassword');
+      }
+    }
 
     if (!result.success) {
       if (result.errors) {
@@ -33,6 +58,7 @@ export default function LoginPage() {
   };
 
   return (
+  <>
     <FormWrapper
       title={process.env.REACT_APP_APP_NAME || 'Expense Tracker'}
       subtitle="Sign in to your account"
@@ -55,16 +81,51 @@ export default function LoginPage() {
         error={validationErrors.email}
         required
       />
+      <div className="flex items-center justify-between mb-1">
+        <label className="block text-sm font-medium text-gray-700">
+          Password
+        </label>
 
+        <button
+          type="button"
+          onClick={() => setShowForgotPasswordModal(true)}
+          className="text-sm text-blue-600 hover:text-blue-500 focus:outline-none"
+        >
+          Forgot password?
+        </button>
+      </div>
       <FormInput
-        label="Password"
         type="password"
         placeholder="Enter your password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         error={validationErrors.password}
+        showPasswordToggle={true}
         required
       />
+
+      {/* Remember Me Checkbox */}
+      <div className="flex items-center">
+        <input
+          id="remember-me"
+          type="checkbox"
+          checked={rememberMe}
+          onChange={(e) => setRememberMe(e.target.checked)}
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+        />
+        <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 cursor-pointer">
+          Remember me
+        </label>
+      </div>
+
     </FormWrapper>
+
+    <ForgotPasswordModal
+      isOpen={showForgotPasswordModal}
+      onClose={() => setShowForgotPasswordModal(false)}
+      onBackToLogin={() => setShowForgotPasswordModal(false)}
+    />
+    </>
   );
+
 }
