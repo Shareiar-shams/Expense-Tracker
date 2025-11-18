@@ -118,13 +118,13 @@ export default function Dashboard() {
     datasets: [{ label: 'Amount', data: [summary.income, summary.expense], backgroundColor: ['#5cb85c', '#d9534f'], borderColor: ['#4cae4c', '#c9302c'], borderWidth: 2, borderRadius: 6 }]
   };
   const doughnutData = { labels: ['Income', 'Expense', 'Balance'], datasets: [{ data: [summary.income, summary.expense, Math.max(0, summary.balance)], backgroundColor: ['#5cb85c', '#d9534f', '#5bc0de'], borderColor: ['#4cae4c', '#c9302c', '#46b8da'], borderWidth: 2 }] };
-  const monthlyChartData = {
-    labels: monthlyData.map(m => m.month),
-    datasets: [
-      { label: 'Income', data: monthlyData.map(m => m.income), borderColor: '#5cb85c', backgroundColor: 'rgba(92, 184, 92, 0.1)', fill: true, tension: 0.4, pointRadius: 6, pointHoverRadius: 8 },
-      { label: 'Expense', data: monthlyData.map(m => m.expense), borderColor: '#d9534f', backgroundColor: 'rgba(217, 83, 79, 0.1)', fill: true, tension: 0.4, pointRadius: 6, pointHoverRadius: 8 }
-    ]
-  };
+  // const monthlyChartData = {
+  //   labels: monthlyData.map(m => m.month),
+  //   datasets: [
+  //     { label: 'Income', data: monthlyData.map(m => m.income), borderColor: '#5cb85c', backgroundColor: 'rgba(92, 184, 92, 0.1)', fill: true, tension: 0.4, pointRadius: 6, pointHoverRadius: 8 },
+  //     { label: 'Expense', data: monthlyData.map(m => m.expense), borderColor: '#d9534f', backgroundColor: 'rgba(217, 83, 79, 0.1)', fill: true, tension: 0.4, pointRadius: 6, pointHoverRadius: 8 }
+  //   ]
+  // };
 
   const availableMonths = monthlyData.map(m => ({ key: m.monthKey, name: m.month }));
 
