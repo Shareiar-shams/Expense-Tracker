@@ -166,12 +166,65 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly Trends Chart */}
-        {monthlyData.length > 0 && (
+        {/* {monthlyData.length > 0 && (
           <div className="mb-10">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Monthly Income & Expense Trends</h2>
             <div className="bg-white p-6 rounded-xl border shadow-sm">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Financial Trends</h3>
               <div className="h-80"><Line data={monthlyChartData} options={{ responsive: true, maintainAspectRatio: false }} /></div>
+            </div>
+          </div>
+        )} */}
+
+        {monthlyData.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Monthly Income & Expense Trends</h2>
+            <div className="bg-white p-6 rounded-xl border shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Financial Trends</h3>
+              <div className="h-80">
+                <Bar
+                  data={{
+                    labels: monthlyData.map(month => month.month),
+                    datasets: [
+                      {
+                        label: 'Income',
+                        data: monthlyData.map(month => month.income),
+                        backgroundColor: '#5cb85c'
+                      },
+                      {
+                        label: 'Expense',
+                        data: monthlyData.map(month => month.expense),
+                        backgroundColor: '#d9534f'
+                      }
+                    ]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { position: 'top' },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            return context.dataset.label + ': ' + new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      x: { stacked: false },
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          callback: function(value) {
+                            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
