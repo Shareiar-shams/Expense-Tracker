@@ -4,6 +4,16 @@ const crypto = require('crypto');
 const User = require('../models/Users');
 const { sendPasswordResetEmail } = require('../utils/email');
 
+// Verify Token
+const verifyToken = async (req, res) => {
+    try {
+        // If we reach here, the token is valid (middleware already verified it)
+        res.json({ message: 'Token is valid' });
+    } catch (err) {
+        res.status(401).json({ message: 'Invalid token' });
+    }
+};
+
 // Register
 const register = async (req, res) => {
     try {
@@ -163,5 +173,6 @@ module.exports = {
     login,
     logout,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyToken
 };
