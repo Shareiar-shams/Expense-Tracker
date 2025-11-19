@@ -37,7 +37,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-xl font-bold text-blue-700">ET</span>
+                <span className="text-xl font-bold text-blue-700">MC</span>
               </div>
             </div>
             <div className="text-white">
