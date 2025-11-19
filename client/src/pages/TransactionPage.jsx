@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../services/api';
 import Swal from 'sweetalert2';
+import CategoryModal from "../components/CategoryModal";
+import {
+  FaHome, FaUtensils, FaCar, FaGamepad, FaMoneyBillAlt, FaGift,
+  FaHospital, FaBook, FaShoppingCart, FaDonate
+} from 'react-icons/fa';
+
+const CATEGORY_ICONS = [
+  { icon: FaHome, label: 'Home' },
+  { icon: FaUtensils, label: 'Food' },
+  { icon: FaCar, label: 'Transport' },
+  { icon: FaGamepad, label: 'Entertainment' },
+  { icon: FaMoneyBillAlt, label: 'Salary' },
+  { icon: FaGift, label: 'Gift' },
+  { icon: FaHospital, label: 'Health' },
+  { icon: FaBook, label: 'Education' },
+  { icon: FaShoppingCart, label: 'Shopping' },
+  { icon: FaDonate, label: 'Donation' },
+];
 
 export default function TransactionPage() {
   const [transactions, setTransactions] = useState([]);
@@ -20,6 +38,14 @@ export default function TransactionPage() {
   const [sortBy, setSortBy] = useState('date');
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
+  
+  // Category input states
+  const [categoryInput, setCategoryInput] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  
+  // Category modal states
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   
   // Edit functionality states
   const [isEditing, setIsEditing] = useState(false);
@@ -84,6 +110,7 @@ export default function TransactionPage() {
         description: '',
         date: new Date().toISOString().split('T')[0],
       });
+      setCategoryInput('');
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -97,13 +124,15 @@ export default function TransactionPage() {
   const handleEdit = (transaction) => {
     setIsEditing(true);
     setEditingTransaction(transaction);
+    const category = categories.find(cat => cat._id === transaction.category);
     setForm({
       amount: transaction.amount,
       type: transaction.type,
       category: transaction.category,
-      description: transaction.notes || '',
+      description: transaction.description || '',
       date: transaction.date.split('T')[0], // Format date for input
     });
+    setCategoryInput(category?.name || '');
     setError('');
     setSuccess('');
   };
@@ -146,6 +175,7 @@ export default function TransactionPage() {
         description: '',
         date: new Date().toISOString().split('T')[0],
       });
+      setCategoryInput('');
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -166,6 +196,7 @@ export default function TransactionPage() {
       description: '',
       date: new Date().toISOString().split('T')[0],
     });
+    setCategoryInput('');
     setError('');
   };
 
@@ -215,6 +246,81 @@ export default function TransactionPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Category input handling
+  useEffect(() => {
+    if (categoryInput.length > 0) {
+      const filtered = categories.filter(cat => 
+        cat.name.toLowerCase().includes(categoryInput.toLowerCase())
+      );
+      setFilteredCategories(filtered);
+      setShowCategoryDropdown(true);
+    } else {
+      setFilteredCategories(categories);
+      setShowCategoryDropdown(false);
+    }
+  }, [categoryInput, categories]);
+
+  const handleCategoryInputChange = (e) => {
+    const value = e.target.value;
+    setCategoryInput(value);
+    setForm({ ...form, category: '' }); // Clear selected category when typing
+  };
+
+  const handleCategorySelect = (category) => {
+    setForm({ ...form, category: category._id });
+    setCategoryInput(category.name);
+    setShowCategoryDropdown(false);
+  };
+
+  const handleCategoryInputFocus = () => {
+    setFilteredCategories(categories);
+    setShowCategoryDropdown(true);
+  };
+
+  const handleCreateCategory = () => {
+    if (!categoryInput.trim()) {
+      setError('Please enter a category name');
+      return;
+    }
+    setShowCategoryModal(true);
+  };
+
+  const handleCategoryModalSave = async (categoryData) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const newCategory = {
+        name: categoryData.name,
+        type: categoryData.type,
+        color: categoryData.color,
+        icon: categoryData.icon
+      };
+
+      const response = await axios.post('/categories', newCategory, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const createdCategory = response.data.category;
+      
+      // Update categories list
+      setCategories(prev => [...prev, createdCategory]);
+      
+      // Select the newly created category
+      setForm({ ...form, category: createdCategory._id });
+      setCategoryInput(createdCategory.name);
+      setShowCategoryDropdown(false);
+      
+      setSuccess(`Category "${createdCategory.name}" created and selected!`);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create category');
+    }
+  };
+
+  const handleCategoryModalClose = () => {
+    setShowCategoryModal(false);
+  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -306,23 +412,126 @@ export default function TransactionPage() {
                 </div>
 
                 {/* Category */}
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Category *
                   </label>
-                  <select
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name} ({cat.type})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={categoryInput}
+                      onChange={handleCategoryInputChange}
+                      onFocus={handleCategoryInputFocus}
+                      placeholder="Search or create category..."
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                    
+                    {/* Dropdown */}
+                    {showCategoryDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {/* Show filtered categories */}
+                        {filteredCategories.length > 0 && (
+                          <div>
+                            <div className="px-4 py-2 text-xs font-medium text-gray-500 bg-gray-50">
+                              Existing Categories
+                            </div>
+                            {filteredCategories.map((cat) => {
+                              const IconComp = CATEGORY_ICONS.find(c => c.label === cat.icon)?.icon || FaDonate;
+                              return (
+                                <div
+                                  key={cat._id}
+                                  onClick={() => handleCategorySelect(cat)}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <div
+                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm"
+                                      style={{ backgroundColor: cat.color || '#6B7280' }}
+                                    >
+                                      <IconComp />
+                                    </div>
+                                    <span>{cat.name}</span>
+                                  </div>
+                                  <span className="text-xs text-gray-500">({cat.type})</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        
+                        {/* Show create option if input doesn't match existing categories */}
+                        {categoryInput.length > 0 && !categories.some(cat => 
+                          cat.name.toLowerCase() === categoryInput.toLowerCase()
+                        ) && (
+                          <div>
+                            {filteredCategories.length > 0 && <div className="border-t border-gray-200"></div>}
+                            <div
+                              onClick={handleCreateCategory}
+                              className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-blue-600 font-medium flex items-center space-x-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                              <span>Create "{categoryInput}"</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Show message if no categories */}
+                        {categories.length === 0 && (
+                          <div className="px-4 py-3 text-center text-gray-500">
+                            <div className="mb-2">No categories found</div>
+                            <button
+                              onClick={handleCreateCategory}
+                              className="text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              Create your first category
+                            </button>
+                          </div>
+                        )}
+                        
+                        {/* Show message if no matches */}
+                        {categoryInput.length > 0 && filteredCategories.length === 0 && categories.some(cat => 
+                          cat.name.toLowerCase() !== categoryInput.toLowerCase()
+                        ) && (
+                          <div className="px-4 py-3 text-center text-gray-500">
+                            <div className="mb-2">No categories match "{categoryInput}"</div>
+                            <button
+                              onClick={handleCreateCategory}
+                              className="text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              Create "{categoryInput}"
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Show selected category info */}
+                  {form.category && !categoryInput && (() => {
+                    const selectedCategory = categories.find(cat => cat._id === form.category);
+                    const IconComp = CATEGORY_ICONS.find(c => c.label === selectedCategory?.icon)?.icon || FaDonate;
+                    return selectedCategory ? (
+                      <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm"
+                            style={{ backgroundColor: selectedCategory.color || '#6B7280' }}
+                          >
+                            <IconComp />
+                          </div>
+                          <span className="text-sm font-medium">
+                            {selectedCategory.name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            ({selectedCategory.type})
+                          </span>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* Date */}
@@ -380,26 +589,28 @@ export default function TransactionPage() {
           {/* Transactions List */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-              <div className="bg-blue-600 text-white p-4 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0 md:space-x-4">
-                <h3 className="text-xl font-bold">Recent Transactions</h3>
-                <div className="flex space-x-2">
-                  <select
-                    value={filterType}
-                    onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
-                    className="px-3 py-1 rounded-lg bg-white text-gray-800 border border-gray-200 text-sm"
-                  >
-                    <option value="all">All Types</option>
-                    <option value="income">Income Only</option>
-                    <option value="expense">Expense Only</option>
-                  </select>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-1 rounded-lg bg-white text-gray-800 border border-gray-200 text-sm"
-                  >
-                    <option value="date">Sort by Date</option>
-                    <option value="amount">Sort by Amount</option>
-                  </select>
+              <div className="bg-blue-600 text-white p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                  <h3 className="text-lg sm:text-xl font-bold">Recent Transactions</h3>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <select
+                      value={filterType}
+                      onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+                      className="px-3 py-2 rounded-lg bg-white text-gray-800 border border-gray-200 text-sm w-full sm:w-auto"
+                    >
+                      <option value="all">All Types</option>
+                      <option value="income">Income Only</option>
+                      <option value="expense">Expense Only</option>
+                    </select>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-2 rounded-lg bg-white text-gray-800 border border-gray-200 text-sm w-full sm:w-auto"
+                    >
+                      <option value="date">Sort by Date</option>
+                      <option value="amount">Sort by Amount</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -416,45 +627,50 @@ export default function TransactionPage() {
                 <div className="divide-y divide-gray-200">
                   {paginatedTransactions.map((tx) => {
                     const category = categories.find(cat => cat._id === tx.category);
+                    const IconComp = CATEGORY_ICONS.find(c => c.label === category?.icon)?.icon || FaDonate;
                     return (
-                      <div key={tx._id} className="p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center space-x-4">
+                      <div key={tx._id} className="p-3 sm:p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
+                          {/* Left side - Icon and transaction info */}
+                          <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
                             <div
-                              className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold"
+                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0"
                               style={{ backgroundColor: category?.color || '#6B7280' }}
                             >
-                              {category?.name?.charAt(0) || '?'}
+                              <IconComp />
                             </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-800">{tx.description || 'No description'}</h4>
-                              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                                <span>{category?.name || 'Unknown Category'}</span>
-                                <span>•</span>
-                                <span>{new Date(tx.date).toLocaleDateString()}</span>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{tx.description || 'No description'}</h4>
+                              <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-500 mt-1">
+                                <span className="truncate">{category?.name || 'Unknown Category'}</span>
+                                <span className="flex-shrink-0">•</span>
+                                <span className="flex-shrink-0">{new Date(tx.date).toLocaleDateString()}</span>
                               </div>
                             </div>
                           </div>
-                          <div className="text-right flex items-center space-x-4">
-                            <div>
-                              <p className={`text-lg font-bold ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                          
+                          {/* Right side - Amount, type, and buttons */}
+                          <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4">
+                            <div className="text-right">
+                              <p className={`text-sm sm:text-lg font-bold ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                                 {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                               </p>
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tx.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium ${tx.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                 {tx.type}
                               </span>
                             </div>
+                            
                             {/* Edit and Delete Buttons */}
-                            <div className="flex space-x-2">
+                            <div className="flex space-x-1 sm:space-x-2 flex-shrink-0">
                               <button
                                 onClick={() => handleEdit(tx)}
-                                className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+                                className="px-2 sm:px-3 py-1 bg-blue-500 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-600 transition-colors"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleDelete(tx._id)}
-                                className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+                                className="px-2 sm:px-3 py-1 bg-red-500 text-white text-xs sm:text-sm rounded-lg hover:bg-red-600 transition-colors"
                               >
                                 Delete
                               </button>
@@ -469,34 +685,45 @@ export default function TransactionPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                  <p className="text-sm text-gray-700">
-                    Showing {startIndex + 1}-{Math.min(startIndex + transactionsPerPage, filteredTransactions.length)} of {filteredTransactions.length}
-                  </p>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    <span className="px-3 py-1 text-sm text-gray-700">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
+                <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                    <p className="text-sm text-gray-700 text-center sm:text-left">
+                      Showing {startIndex + 1}-{Math.min(startIndex + transactionsPerPage, filteredTransactions.length)} of {filteredTransactions.length}
+                    </p>
+                    <div className="flex items-center justify-center space-x-2">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-2 rounded-md bg-white border border-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <span className="px-3 py-2 text-sm text-gray-700 font-medium">
+                        {currentPage} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-2 rounded-md bg-white border border-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Category Modal */}
+        <CategoryModal
+          open={showCategoryModal}
+          onClose={handleCategoryModalClose}
+          onSave={handleCategoryModalSave}
+          categoryName={categoryInput}
+          categoryType={form.type}
+        />
       </div>
     </div>
   );
