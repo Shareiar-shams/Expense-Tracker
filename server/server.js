@@ -9,28 +9,62 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+/* =========================
+   Middleware
+========================= */
+app.use(cors({
+  origin: process.env.CLIENT_URL
+    ? process.env.CLIENT_URL.split(',')
+    : '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+app.options('*', cors());
 app.use(express.json());
 
-// Connect to MongoDB
+/* =========================
+   MongoDB Connection (SERVERLESS SAFE)
+========================= */
 const mongoURI = process.env.MONGODB_URI;
 
-mongoose.connect(mongoURI)
-    .then(() => console.log("MongoDB Connected"))
-    .catch(err => console.log("MongoDB Error:", err));
+let cached = global.mongoose;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
-// Sample route
+async function connectDB() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(mongoURI, {
+      bufferCommands: false,
+    }).then((mongoose) => mongoose);
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+// connect database safely
+connectDB()
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.error("MongoDB Error:", err));
+
+/* =========================
+   Routes
+========================= */
+
+// Health check
 app.get('/', (req, res) => {
-    res.send('Expense Tracker API is running');
-}); 
+  res.send('Expense Tracker API is running');
+});
 
-// Auth routes
+// Auth routes (PUBLIC)
 app.use('/api/auth', authRoutes);
 
-// 🔴 Apply Auth Middleware Globally (Protections Start)
+// Protected routes start here
 app.use(authMiddleware);
 
 // Category routes
@@ -39,7 +73,7 @@ app.use('/api/categories', categoryRoutes);
 // Transaction routes
 app.use('/api/transactions', transactionRoutes);
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+/* =========================
+   Export app for Vercel
+========================= */
+module.exports = app;
