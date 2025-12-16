@@ -16,14 +16,32 @@ app.use(cors());
 app.use(express.json());
 
 /* =========================
-   MongoDB Connection (SERVERLESS SAFE)
-========================= */
-// Connect to MongoDB
+    MongoDB Connection (SERVERLESS SAFE)
+ ========================= */
 const mongoURI = process.env.MONGODB_URI;
 
-mongoose.connect(mongoURI)
-    .then(() => console.log("MongoDB Connected"))
-    .catch(err => console.log("MongoDB Error:", err));
+let cached = global.mongoose;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(mongoURI, {
+      bufferCommands: false,
+    }).then((mongoose) => mongoose);
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+// connect database safely
+connectDB()
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.error("MongoDB Error:", err));
 
 /* =========================
    Routes
